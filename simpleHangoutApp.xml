@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License
+-->
+  <ModulePrefs title="Hangout Starter">
+    <Require feature="rpc" />
+    <Require feature="views" />
+    <Require feature="locked-domain" />
+  </ModulePrefs>
+  <Content type="html"><![CDATA[
+
+<html>
+<style type="text/css">
+  @font-face {
+  font-family: 'Museo Sans';
+  src: url('https://versions.meetin.gs/hangout/fonts/museosans_500-webfont.eot?') format('eot'), 
+  url('https://versions.meetin.gs/hangout/fonts/museosans_500-webfont.woff') format('woff'), 
+  url('https://versions.meetin.gs/hangout/fonts/museosans_500-webfont.ttf')  format('truetype'),
+  url('https://versions.meetin.gs/hangout/fonts/museosans_500-webfont.svg#Museo Sans') format('svg'),
+  url("https://versions.meetin.gs/hangout/fonts/museosans_500-webfont.otf") format("opentype");
+}
+
+body {
+  font-size: 15px;
+  color: #444;
+  font-weight: 100;
+  padding: 45px 60px;
+}
+
+.meeting-time {
+  font-family: "Museo Sans", Helvetica, Arial, sans-serif;
+  background: #F4F4F4;
+  padding: 10px 14px 10px 8px;
+  font-size: 2em;
+  font-style: italic;
+  display: inline-block;
+}
+
+.meeting-time span {
+  font-family: "Museo Sans", Helvetica, Arial, sans-serif;
+}
+
+.notification {
+  font-family: "Museo Sans", Helvetica, Arial, sans-serif;
+}
+
+.notification.large {
+  font-size: 1.2em;
+}
+
+.blue {
+  color: #fff;
+  background: #7bc8e1;
+  background: -moz-linear-gradient(top, #90d1e6, #66bfdc);
+  background: -webkit-gradient(linear, center top, center bottom, from(#90d1e6), to(#66bfdc));
+  background: -o-linear-gradient(top, #90d1e6, #66bfdc);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#90d1e6', endColorstr='#66bfdc');
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr='#90d1e6', endColorstr='#66bfdc')";
+  background: linear-gradient(top, #90d1e6, #66bfdc);
+}
+
+.blue:hover {
+  color: #fff;
+  background: #51b7d8;
+  background: -moz-linear-gradient(top, #66bfdc, #3daed3);
+  background: -webkit-gradient(linear, center top, center bottom, from(#66bfdc), to(#3daed3));
+  background: -o-linear-gradient(top, #66bfdc, #3daed3);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#66bfdc', endColorstr='#3daed3');
+  -ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr='#66bfdc', endColorstr='#3daed3')";
+  background: linear-gradient(top, #66bfdc, #3daed3);
+}
+
+.button {
+  position: relative;
+  display: inline-block;
+  outline: none;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  font: 14px "Museo Sans", Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  padding: 9px 14px;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -khtml-border-radius: 4px;
+  border-radius: 4px;
+  margin-top: 1em;
+}
+</style>
+<body>
+
+  <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+  <h3><img src="https://versions.meetin.gs/hangout/images/meetingshangout.png" alt="Meetin.gs + Google+ Hangouts"/></h3>
+
+  <p class="notification large">Wait for the participants to join the conference</p>
+
+  <span class="meeting-time" id="meetingHasEnded" style="display:none;">
+    Meeting has ended
+  </span>
+
+  <span class="meeting-time" id="meetingNotYetStarted" style="display:none;">
+    Meeting starts in: <span id="hoursRemaining1"></span> <span id="minutesRemaining1"></span>
+  </span>
+
+  <span class="meeting-time" id="meetingInProgress" style="display:none;">
+    Meeting time left: <span id="hoursRemaining2"></span> <span id="minutesRemaining2"></span>
+  </span>
+
+  <p class="notification">Note: Do not close this window/view or the participants will be unable to join the conference.</p>
+
+  <a class="button blue close">Close conference</a>
+
+  <script>
+    (function($) {
+  var user_id, meeting_id, token, begin_milliepoch, end_milliepoch, api_poll_url;
+
+  function meetingsPoll () {
+    var data = {
+      hangout_uri: gapi.hangout.getHangoutUrl(),
+      user_count: gapi.hangout.getParticipants().length,
+      user_id: user_id,
+      token: token
+    };
+
+    $.post(api_poll_url, data, function (response) {
+      console.log("success:", response);
+    })
+    .fail(function(response) {
+      console.log( "error: ", response);
+    });
+  }
+
+  function meetingTimer() {
+    var time = new Date().getTime();
+
+    if(time > end_milliepoch) {
+      $('#meetingNotYetStarted').hide();
+      $('#meetingInProgress').hide();
+      $('#meetingHasEnded').show();
+    } else {
+      $('#meetingHasEnded').hide();
+      var dTime, $hSpan, $mSpan;
+      if( time < begin_milliepoch) {
+        dTime = Math.floor((begin_milliepoch - time) / 60 / 1000);
+        $('#meetingNotYetStarted').show();
+        $('#meetingInProgress').hide();
+        $hSpan = $('#hoursRemaining1');
+        $mSpan = $('#minutesRemaining1');
+      } else {
+        dTime = Math.floor((end_milliepoch - time) / 60 / 1000);
+        $('#meetingNotYetStarted').hide();
+        $('#meetingInProgress').show();
+        $hSpan = $('#hoursRemaining2');
+        $mSpan = $('#minutesRemaining2');
+
+      }
+      var hoursLeft = Math.floor(dTime / 60);
+      var minutesLeft = dTime - (60 * hoursLeft);
+      $hSpan.text(hoursLeft + (hoursLeft === 1 ? " hour" : " hours"));
+      $mSpan.text(minutesLeft + (minutesLeft === 1 ? " minute" : " minutes"));
+
+      if(hoursLeft === 0) {
+        $hSpan.hide();
+      }
+    }
+  }
+
+  function parseAppData (appDataStr) {
+    var appData = JSON.parse(appDataStr);
+    user_id = appData.user_id;
+    meeting_id = appData.meeting_id;
+    token = appData.token;
+    begin_milliepoch = appData.begin_milliepoch;
+    end_milliepoch = appData.end_milliepoch;
+    api_poll_url = appData.api_poll_url;
+
+    return appData;
+  }
+
+  function init (eventObj) {
+    if (eventObj.isApiReady) {
+      var appDataStr = gadgets.views.getParams()['appData'];
+      parseAppData(appDataStr);
+
+      // Update meeting time every 10 seconds
+      setInterval(meetingTimer, 10000);
+      meetingTimer();
+
+      // Send message to meetin.gs api every 30 seconds
+      setInterval(meetingsPoll, 30000);
+      meetingsPoll();
+    }
+  }
+
+  function apiReady() {
+    // When API is ready...
+    gapi.hangout.onApiReady.add(init);
+  }
+
+  // Wait for gadget to load.
+  gadgets.util.registerOnLoadHandler(apiReady);
+
+  $('.close').click(function () {
+    top.window.close();
+  });
+})(jQuery);
+  </script>
+</body>
+</html>
+
+]]>
+</Content>
+</Module>
+

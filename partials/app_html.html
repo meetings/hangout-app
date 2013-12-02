@@ -1,0 +1,34 @@
+<html>
+<style type="text/css">
+  {{> app_css }}
+</style>
+<body>
+
+  <script src="//plus.google.com/hangouts/_/api/v1/hangout.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+  <h3><img src="https://versions.meetin.gs/hangout/images/meetingshangout.png" alt="Meetin.gs + Google+ Hangouts"/></h3>
+
+  <p class="notification large">Wait for the participants to join the conference</p>
+
+  <span class="meeting-time" id="meetingHasEnded" style="display:none;">
+    Meeting has ended
+  </span>
+
+  <span class="meeting-time" id="meetingNotYetStarted" style="display:none;">
+    Meeting starts in: <span id="hoursRemaining1"></span> <span id="minutesRemaining1"></span>
+  </span>
+
+  <span class="meeting-time" id="meetingInProgress" style="display:none;">
+    Meeting time left: <span id="hoursRemaining2"></span> <span id="minutesRemaining2"></span>
+  </span>
+
+  <p class="notification">Note: Do not close this window/view or the participants will be unable to join the conference.</p>
+
+  <a class="button blue close">Close conference</a>
+
+  <script>
+    {{> app_js}}
+  </script>
+</body>
+</html>
